@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MyMovieList</string>
+    <string name="imdb_top_250_movie_list">IMDB Top 250 Movie List</string>
+</resources>
