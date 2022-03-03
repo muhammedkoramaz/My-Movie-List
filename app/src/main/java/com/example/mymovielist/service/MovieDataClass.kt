@@ -3,5 +3,6 @@ package com.example.mymovielist.service
 data class Movie(
     val name: String,
     val desc: String,
-    val thumb_url: String
+    val thumb_url: String,
+    val image_url: String
 )
