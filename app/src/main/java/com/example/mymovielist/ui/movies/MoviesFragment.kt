@@ -1,60 +1,68 @@
 package com.example.mymovielist.ui.movies
 
+import MovieAdapter
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.mymovielist.R
+import com.example.mymovielist.service.Constant
+import com.example.mymovielist.service.Movie
+import com.example.mymovielist.service.RetrofitService
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [MoviesFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class MoviesFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
-
+    // Servis bağlantıları yapılıyor.
+    private val retrofit = Retrofit.Builder()
+        .baseUrl(Constant.BASE_URL) //Servis URL'in sabit kısmı veriliyor.
+        .addConverterFactory(GsonConverterFactory.create()) //JSON datası Gson aracılığı ile dönüştürülüyor.
+        .build()
+    private val api = retrofit.create(RetrofitService::class.java) //retrofit objesi oluşuyor.
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_movies, container, false)
-    }
+        api.getAllMovies().enqueue(object : Callback<List<Movie>> {
+            override fun onFailure( //İnternet bağlantısında sorun yaşanırsa bu fonksiyon çalışıyor.
+                call: Call<List<Movie>>,
+                t: Throwable
+            ) {
+                Log.d("Not Internet Connection", t.message!!)
+            }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment MoviesFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            MoviesFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
+            override fun onResponse( // Servise başarıyla bağlanılırsa bu fonksiyon çalışıyor.
+                call: Call<List<Movie>>,
+                response: Response<List<Movie>>
+            ) {
+                val recyclerView =
+                    view?.findViewById<RecyclerView>(R.id.recyclerview) // recyclerviewi tanıtıyorum.
+
+                if (response.isSuccessful) { // dönen veriler başarıyla geldiyse buraya giriyor
+                    recyclerView?.layoutManager =
+                        GridLayoutManager( //her satırda iki item görünmesi için gridlayoutmanager kullanıyorum.
+                            requireContext(),
+                            2,
+                            GridLayoutManager.VERTICAL,
+                            false
+                        )
+                    //todo işlem tekrar tekrar yapılıyor düzelt
+                    val adapter =
+                        MovieAdapter( // Servisteki tüm verilere response.body() ile ulaşıyorum.
+                            response.body()!!,
+                            this@MoviesFragment
+                        )
+                    recyclerView?.adapter = adapter //adapteri dolduruyorum.
                 }
             }
+        })
+        return inflater.inflate(R.layout.fragment_movies, container, false)
     }
 }
