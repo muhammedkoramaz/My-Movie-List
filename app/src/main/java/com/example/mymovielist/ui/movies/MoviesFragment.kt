@@ -57,7 +57,7 @@ class MoviesFragment : Fragment() {
                     val adapter =
                         MovieAdapter( // Servisteki tüm verilere response.body() ile ulaşıyorum.
                             response.body()!!,
-                            this@MoviesFragment
+                            requireContext()
                         )
                     recyclerView?.adapter = adapter //adapteri dolduruyorum.
                 }
